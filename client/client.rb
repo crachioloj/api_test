@@ -12,10 +12,9 @@ class Client
   PRIMARY_COLORS = ["red", "blue", "yellow"]
 
   # There isn't an easy way to get the total number of artworks or remaining pages
-  # from the API.
+  # from the API, so this is hardcoded for now...
   ARTWORKS_MAX_PAGE = 50
 
-  # Your retrieve function plus any additional functions go here ...
   def retrieve(options = {})
     return unless options.respond_to?(:each)
 
@@ -25,10 +24,6 @@ class Client
     artworks = get_artworks(options, currentPage)
 
     return unless artworks.respond_to?(:each)
-
-    # if artworks.empty?
-    #   return { :ids=>[], :for_sale=>[], :soldPrimaryCount=>0, :artistNames=>[], :previousPage=>nil, :nextPage=>nil }
-    # end
 
     ids = artworks.map {|a| a["id"]}.uniq
 
@@ -42,7 +37,7 @@ class Client
 
     artist_names = artist_ids
       .map {|id| get_artist(id)}
-      .select {|a| a.respond_to?(:each)}
+      .select {|a| a.has_key?("name")} # ensure each item is valid and has name key
       .map {|a| a["name"]}
       .sort
     
@@ -111,37 +106,3 @@ class Client
   end
 
 end
-
-
-# client = Client.new
-
-# puts client.retrieve()
-
-# result = client.retrieve({page: 15, dominant_color: ["red", "blue", "brown"]})
-# puts result
-
-# result = client.retrieve({dominant_color: ["hotpink"]})
-# puts result
-
-# result = client.retrieve({page: 51 })
-# puts result
-
-# result2 = client.retrieve({ dominant_color: ["red", "blue", "brown"]})
-
-
-# result = client.retrieve({page: 15 })
-
-# thing = {}
-
-# puts thing
-
-# thing = { ids: [], for_sale: []}
-# puts thing
-
-# thing[:ids] = [1,2,3]
-
-# puts thing
-
-# thing[:asdf]= 1
-
-# puts thing
