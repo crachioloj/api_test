@@ -1,13 +1,21 @@
 require 'rest-client'
 require 'json'
 
-# Client for interacting with 'artworks' and 'artist' APIS
+# Client for interacting with 'artworks' and 'artist' APIs
 class Client
   ARTWORKS_URL = 'http://localhost:4567/artworks'.freeze
   ARTIST_URL = 'http://localhost:4567/artist'.freeze
-
+  
   ARTWORKS_LIMIT = 10
   PRIMARY_COLORS = %w[red blue yellow].freeze
+
+  KEY_ARTIST_ID = 'artist_id'.freeze
+  KEY_AVAILABILITY = 'availability'.freeze
+  KEY_DOMINANT_COLOR = 'dominant_color'.freeze
+  KEY_NAME = 'name'.freeze
+
+  STATE_FOR_SALE = 'for_sale'.freeze
+  STATE_SOLD = 'sold'.freeze
 
   # 'Artworks' API doesn't expose a way to get the total items or remaining pages
   # that match the query, so this is hardcoded for now...
@@ -56,17 +64,17 @@ class Client
 
   def get_sold_primary_count(artworks)
     artworks
-      .select { |a| a['availability'] == 'sold' && PRIMARY_COLORS.include?(a['dominant_color']) }
+      .select { |a| a[KEY_AVAILABILITY] == STATE_SOLD && PRIMARY_COLORS.include?(a[KEY_DOMINANT_COLOR]) }
       .count
   end
 
   def get_artist_names(artworks)
-    artist_ids = artworks.map { |a| a['artist_id'] }.uniq
+    artist_ids = artworks.map { |a| a[KEY_ARTIST_ID] }.uniq
 
     artist_ids
       .map { |id| get_artist(id) }
-      .select { |a| a.key?('name') }
-      .map { |a| a['name'] }
+      .select { |a| a.key?(KEY_NAME) }
+      .map { |a| a[KEY_NAME] }
       .sort
   end
 
@@ -79,14 +87,14 @@ class Client
 
   def get_for_sale_primary(artworks)
     artworks
-      .select { |a| a['availability'] == 'for_sale' && PRIMARY_COLORS.include?(a['dominant_color']) }
-      .map { |a| a.merge({ 'isPrimary' => true }) }
+      .select { |a| a[KEY_AVAILABILITY] == STATE_FOR_SALE && PRIMARY_COLORS.include?(a[KEY_DOMINANT_COLOR]) }
+      .map { |a| a.merge({ isPrimary: true }) }
       .map { |a| a.transform_keys(&:to_sym) }
   end
 
   def get_for_sale_nonprimary(artworks)
     artworks
-      .select { |a| a['availability'] == 'for_sale' && !PRIMARY_COLORS.include?(a['dominant_color']) }
+      .select { |a| a[KEY_AVAILABILITY] == STATE_FOR_SALE && !PRIMARY_COLORS.include?(a[KEY_DOMINANT_COLOR]) }
       .map { |a| a.transform_keys(&:to_sym) }
   end
 
