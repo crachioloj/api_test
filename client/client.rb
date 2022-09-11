@@ -5,7 +5,7 @@ require 'json'
 class Client
   ARTWORKS_URL = 'http://localhost:4567/artworks'.freeze
   ARTIST_URL = 'http://localhost:4567/artist'.freeze
-  
+
   ARTWORKS_LIMIT = 10
   PRIMARY_COLORS = %w[red blue yellow].freeze
 
