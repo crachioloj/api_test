@@ -7,9 +7,13 @@ class Client
   ARTWORKS_URL = "http://localhost:4567/artworks"
   ARTIST_URL = "http://localhost:4567/artist"
 
-  # constants
+  # Constants
   ARTWORKS_LIMIT = 10
   PRIMARY_COLORS = ["red", "blue", "yellow"]
+
+  # There isn't an easy way to get the total number of artworks or remaining pages
+  # from the API.
+  ARTWORKS_MAX_PAGE = 50
 
   # Your retrieve function plus any additional functions go here ...
   def retrieve(options = {})
@@ -22,26 +26,13 @@ class Client
 
     return unless artworks.respond_to?(:each)
 
+    # if artworks.empty?
+    #   return { :ids=>[], :for_sale=>[], :soldPrimaryCount=>0, :artistNames=>[], :previousPage=>nil, :nextPage=>nil }
+    # end
+
     ids = artworks.map {|a| a["id"]}.uniq
 
-    # Task description sounded like isPrimary should be on every for_sale item
-    # and set to true or false accordingly,
-    # but the test suite requires isPrimary only being on items where it is set to true
-    # for_sale = artworks
-    #   .select {|a| a["availability"] == "for_sale"}
-    #   .map {|a| a.merge({"isPrimary" => PRIMARY_COLORS.include?(a["dominant_color"])})}
-    #   .map { |a| a.transform_keys { |k| k.to_sym}}
-    
-    for_sale_primary = artworks
-      .select {|a| a["availability"] == "for_sale" && PRIMARY_COLORS.include?(a["dominant_color"])}
-      .map {|a| a.merge({"isPrimary" => true})}
-      .map { |a| a.transform_keys { |k| k.to_sym}}
-
-    for_sale_not_primary = artworks
-      .select {|a| a["availability"] == "for_sale" && !PRIMARY_COLORS.include?(a["dominant_color"])}
-      .map { |a| a.transform_keys { |k| k.to_sym}}
-
-    for_sale = for_sale_primary + for_sale_not_primary
+    for_sale = get_artwork_for_sale(artworks)
 
     sold_primary_count = artworks
       .select { |a| a["availability"] == "sold" && PRIMARY_COLORS.include?(a["dominant_color"])}
@@ -62,12 +53,34 @@ class Client
     response[:soldPrimaryCount] = sold_primary_count
     response[:artistNames] = artist_names
     response[:previousPage] = currentPage == 1 ? nil : currentPage - 1
-    response[:nextPage] =  currentPage + 1
+    response[:nextPage] = artworks.empty? || currentPage >= ARTWORKS_MAX_PAGE ? nil : currentPage + 1
 
     response
   end
 
   private
+
+  def get_artwork_for_sale(artworks)
+    # Task description sounded like isPrimary should be on every for_sale item
+    # and set to true or false accordingly,
+    # but the test suite requires isPrimary only being on items where it is set to true
+    # for_sale = artworks
+    #   .select {|a| a["availability"] == "for_sale"}
+    #   .map {|a| a.merge({"isPrimary" => PRIMARY_COLORS.include?(a["dominant_color"])})}
+    #   .map { |a| a.transform_keys { |k| k.to_sym}}
+    
+    for_sale_primary = artworks
+      .select {|a| a["availability"] == "for_sale" && PRIMARY_COLORS.include?(a["dominant_color"])}
+      .map {|a| a.merge({"isPrimary" => true})}
+      .map { |a| a.transform_keys { |k| k.to_sym}}
+
+    for_sale_not_primary = artworks
+      .select {|a| a["availability"] == "for_sale" && !PRIMARY_COLORS.include?(a["dominant_color"])}
+      .map { |a| a.transform_keys { |k| k.to_sym}}
+
+    for_sale = for_sale_primary + for_sale_not_primary
+  end
+
   def get_artist(artist_id)
     begin
       response = RestClient.get ARTIST_URL, params: {id: artist_id}
@@ -104,13 +117,13 @@ end
 
 # puts client.retrieve()
 
-# result = client.retrieve({page: 0, dominant_color: ["red", "blue", "brown"]})
+# result = client.retrieve({page: 15, dominant_color: ["red", "blue", "brown"]})
 # puts result
 
-# # result = client.retrieve({dominant_color: ["red"]})
+# result = client.retrieve({dominant_color: ["hotpink"]})
 # puts result
 
-# result = client.retrieve({page: 15 })
+# result = client.retrieve({page: 51 })
 # puts result
 
 # result2 = client.retrieve({ dominant_color: ["red", "blue", "brown"]})
