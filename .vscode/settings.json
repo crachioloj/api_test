@@ -1,0 +1,5 @@
+{
+  "ruby.rubocop.configFilePath": "./.rubocop.yml",
+  "ruby.rubocop.executePath": "/Users/Mavericks/.rbenv/versions/2.7.5/bin/",
+  "ruby.rubocop.onSave": true
+}
